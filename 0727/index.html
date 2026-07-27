@@ -1,1 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What's a weight? A hands-on explainer | Innovate + Elevate</title>
+<meta name="description" content="Open weight AI models publish their weights. But what is a weight? Train a tiny six-knob model in your browser and find out." />
 
+<!-- Link preview cards (LinkedIn, Slack, iMessage) -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="What's a weight? A hands-on explainer" />
+<meta property="og:description" content="Train a tiny six-knob model in your browser and see why the weights are the whole model." />
+<meta property="og:site_name" content="Innovate + Elevate" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --midnight: #0D1B35;
+    --emerald: #0B8F68;
+    --azure: #60A5FA;
+    --periwinkle: #93C5FD;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--midnight);
+    color: var(--white);
+    font-family: Outfit, system-ui, sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+  .mark { font-family: Syne, sans-serif; font-size: 20px; letter-spacing: -0.5px; }
+  .mark span { color: var(--emerald); }
+  .label {
+    font-weight: 600; font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--azure);
+  }
+  h1 {
+    font-family: Syne, sans-serif; font-weight: 400; font-size: clamp(30px, 6vw, 48px);
+    line-height: 1.1; letter-spacing: -1px; margin: 16px 0 0;
+  }
+  h1 em { font-style: normal; color: var(--emerald); }
+  h2 {
+    font-family: Syne, sans-serif; font-weight: 400; font-size: clamp(20px, 4vw, 26px);
+    letter-spacing: -0.5px; margin: 48px 0 12px;
+  }
+  p { line-height: 1.6; font-size: 16px; color: var(--periwinkle); max-width: 62ch; }
+  p.on-dark { color: rgba(255,255,255,0.9); }
+  .rule { width: 64px; height: 3px; background: var(--emerald); margin: 24px 0 8px; }
+  a { color: var(--emerald); }
+
+  .panel {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px; padding: 20px; margin-top: 20px;
+  }
+  .board { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .chart { flex: 1 1 340px; min-width: 260px; }
+  .faders { display: flex; gap: 12px; margin: 0 auto; }
+
+  .fader { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .track {
+    position: relative; width: 30px; height: 160px; touch-action: none; cursor: ns-resize;
+    border-radius: 4px; outline-offset: 4px;
+  }
+  .track:focus-visible { outline: 2px solid var(--azure); }
+  .rail {
+    position: absolute; left: 13px; top: 0; width: 4px; height: 100%;
+    background: rgba(255,255,255,0.14); border-radius: 2px;
+  }
+  .knob {
+    position: absolute; left: 0; width: 30px; height: 18px; border-radius: 3px;
+    background: var(--emerald); box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .fader .name { font-size: 11px; opacity: 0.65; }
+  .fader .val { font-size: 12px; font-weight: 500; color: var(--periwinkle); font-variant-numeric: tabular-nums; }
+
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 22px; }
+  button {
+    font-family: Outfit, sans-serif; font-weight: 500; font-size: 14px; padding: 11px 22px;
+    border-radius: 999px; cursor: pointer; border: 1px solid rgba(255,255,255,0.25);
+    background: transparent; color: var(--white);
+  }
+  button.primary { background: var(--emerald); border-color: var(--emerald); }
+  .readout { font-size: 13px; color: var(--periwinkle); font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 18px; font-size: 13px; opacity: 0.8; margin-top: 8px; }
+
+  .weightsfile {
+    margin-top: 20px; padding: 16px; border-left: 3px solid var(--emerald);
+    background: rgba(255,255,255,0.04); border-radius: 6px;
+  }
+  .weightsfile .nums { margin-top: 10px; line-height: 1.9; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .weightsfile .nums b { color: var(--azure); font-weight: 400; }
+
+  footer {
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.12);
+    display: flex; gap: 14px; align-items: center; font-size: 13px; opacity: 0.8; flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="mark">I<span>+</span>E</div>
+
+  <div style="margin-top:36px">
+    <div class="label">What's a weight, anyway</div>
+    <h1>These knob positions <em>are the model</em>.</h1>
+    <div class="rule"></div>
+  </div>
+
+  <p>
+    Open weight AI models are the ones you can download and run yourself, because the company
+    published their weights. Which raises a fair question: what's a weight?
+  </p>
+  <p>
+    Picture a mixing board. Training a model means pushing enormous amounts of data through it and
+    nudging every knob a hair each time the output lands closer to right. When training stops, the
+    knobs freeze. Those frozen positions are the weights, and they're the whole model.
+  </p>
+  <p>
+    The board below has six knobs instead of a few hundred billion, but it works the same way.
+    The dashed line is a pattern the model is trying to match. The solid line is what it currently
+    predicts. Press Train, then drag a knob and watch yourself break it.
+  </p>
+
+  <div class="panel">
+    <div class="board">
+      <div class="chart">
+        <svg id="chart" viewBox="0 0 520 220" width="100%" aria-label="Model prediction compared to the target pattern">
+          <rect x="0" y="0" width="520" height="220" fill="rgba(255,255,255,0.03)" rx="6"></rect>
+          <path id="targetPath" fill="none" stroke="var(--periwinkle)" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"></path>
+          <path id="modelPath" fill="none" stroke="var(--emerald)" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+        <div class="legend">
+          <span><span style="color:var(--periwinkle)">- - -</span> the pattern</span>
+          <span><span style="color:var(--emerald)">———</span> the model</span>
+        </div>
+      </div>
+      <div class="faders" id="faders"></div>
+    </div>
+
+    <div class="controls">
+      <button id="trainBtn" class="primary">Train</button>
+      <button id="randBtn">Randomize</button>
+      <span class="readout" id="readout"></span>
+    </div>
+
+    <div class="weightsfile">
+      <div class="label">The entire model, as a file</div>
+      <div class="nums" id="nums"></div>
+      <p style="font-size:13px; margin:12px 0 0">
+        Six numbers. A frontier model is the same idea with hundreds of billions of them, which is why
+        the download runs to hundreds of gigabytes. Publishing those numbers is what open weights means.
+      </p>
+    </div>
+  </div>
+
+  <h2>Why anyone argues about this</h2>
+  <p class="on-dark">
+    Because a file behaves differently than a service. If you have the weights, you can run the model
+    on your own hardware, adapt it to your own work, keep your data in house, and switch providers
+    without starting over. And once those numbers are published, nobody can call them back, which is
+    the tradeoff at the center of the
+    <a href="https://www.microsoft.com/en-us/corporate-responsibility/topics/open-weight/" target="_blank" rel="noopener">
+      open weights declaration</a>
+    signed by twenty-five organizations in July 2026.
+  </p>
+
+  <footer>
+    <span class="mark" style="font-size:16px">I<span>+</span>E</span>
+    <span>·</span>
+    <a href="https://innovate-elevate.ai" target="_blank" rel="noopener">innovate-elevate.ai</a>
+    <span>·</span>
+    <span>Built to be played with. Fork it.</span>
+  </footer>
+</div>
+
+<script>
+/* =========================================================================
+   The model. Six weights, and it really does train.
+
+   predict(): turn the input into six "features," multiply each by its
+   weight, add them up.
+   trainStep(): measure how wrong every prediction is, work out which
+   direction each weight should move to shrink that error, and nudge it.
+   That nudge is gradient descent, the same procedure used to train a
+   frontier model, with six knobs instead of hundreds of billions.
+   ========================================================================= */
+
+const NAMES = ["bias", "slope", "wave A", "wave B", "wave C", "curve"];
+const LR = 0.15;                       // learning rate: size of each nudge
+const XS = Array.from({length: 40}, (_, i) => i / 39);
+
+const features = x => [
+  1,
+  x,
+  Math.sin(2 * Math.PI * x),
+  Math.cos(2 * Math.PI * x),
+  Math.sin(4 * Math.PI * x),
+  x * x
+];
+
+const predict = (w, x) => features(x).reduce((sum, f, i) => sum + f * w[i], 0);
+
+// The pattern being learned. Deliberately not perfectly reachable.
+const target = x => 0.5 + 0.35 * Math.sin(2 * Math.PI * x) - 0.15 * Math.cos(4 * Math.PI * x);
+
+function trainStep(w) {
+  const grads = new Array(w.length).fill(0);
+  for (const x of XS) {
+    const err = predict(w, x) - target(x);
+    const f = features(x);
+    for (let i = 0; i < w.length; i++) {
+      grads[i] += (2 / XS.length) * err * f[i];
+    }
+  }
+  return w.map((wi, i) => clamp(wi - LR * grads[i]));
+}
+
+const loss = w => XS.reduce((s, x) => s + Math.pow(predict(w, x) - target(x), 2), 0) / XS.length;
+const clamp = v => Math.max(-2, Math.min(2, v));
+
+/* ---------------------------- state ---------------------------- */
+let weights = [0.1, -0.3, 0.6, 0.9, -0.7, 0.4];
+let steps = 0;
+let timer = null;
+
+/* ---------------------------- faders ---------------------------- */
+const TRACK_H = 160, KNOB_H = 18;
+const faderEls = [];
+
+NAMES.forEach((name, i) => {
+  const el = document.createElement("div");
+  el.className = "fader";
+  el.innerHTML =
+    '<div class="track" tabindex="0" role="slider" aria-valuemin="-2" aria-valuemax="2" aria-label="' + name + '">' +
+      '<div class="rail"></div><div class="knob"></div>' +
+    '</div>' +
+    '<div class="name">' + name + '</div>' +
+    '<div class="val"></div>';
+  document.getElementById("faders").appendChild(el);
+
+  const track = el.querySelector(".track");
+
+  // Pointer events cover mouse, trackpad, and touch with one code path.
+  const setFromPointer = e => {
+    const r = track.getBoundingClientRect();
+    const pct = 1 - (e.clientY - r.top) / r.height;     // 0 at bottom, 1 at top
+    weights[i] = clamp(pct * 4 - 2);                    // map 0..1 onto -2..2
+    stopTraining();
+    render();
+  };
+
+  track.addEventListener("pointerdown", e => {
+    track.setPointerCapture(e.pointerId);
+    setFromPointer(e);
+  });
+  track.addEventListener("pointermove", e => {
+    if (track.hasPointerCapture(e.pointerId)) setFromPointer(e);
+  });
+
+  // Keyboard access, so the demo isn't mouse-only.
+  track.addEventListener("keydown", e => {
+    const step = e.key === "ArrowUp" ? 0.05 : e.key === "ArrowDown" ? -0.05 : 0;
+    if (!step) return;
+    e.preventDefault();
+    weights[i] = clamp(weights[i] + step);
+    stopTraining();
+    render();
+  });
+
+  faderEls.push({ knob: el.querySelector(".knob"), val: el.querySelector(".val"), track });
+});
+
+/* ---------------------------- drawing ---------------------------- */
+const px = x => 16 + x * 488;
+const py = y => 204 - ((y + 0.4) / 1.8) * 188;
+const pathFor = fn => XS.map((x, i) => (i ? "L" : "M") + px(x).toFixed(1) + "," + py(fn(x)).toFixed(1)).join(" ");
+
+document.getElementById("targetPath").setAttribute("d", pathFor(target));
+
+function render() {
+  document.getElementById("modelPath").setAttribute("d", pathFor(x => predict(weights, x)));
+
+  weights.forEach((v, i) => {
+    const pct = (v + 2) / 4;
+    const f = faderEls[i];
+    f.knob.style.top = ((1 - pct) * (TRACK_H - KNOB_H)) + "px";
+    f.val.textContent = (v >= 0 ? "+" : "") + v.toFixed(2);
+    f.track.setAttribute("aria-valuenow", v.toFixed(2));
+  });
+
+  document.getElementById("readout").textContent =
+    "steps: " + steps + " · error: " + loss(weights).toFixed(4);
+
+  document.getElementById("nums").innerHTML = weights
+    .map((v, i) => "<b>" + NAMES[i] + "</b> " + (v >= 0 ? "+" : "") + v.toFixed(4))
+    .join("&nbsp;&nbsp;&nbsp; ");
+}
+
+/* ---------------------------- controls ---------------------------- */
+const trainBtn = document.getElementById("trainBtn");
+
+function stopTraining() {
+  if (!timer) return;
+  clearInterval(timer);
+  timer = null;
+  trainBtn.textContent = "Train";
+}
+
+trainBtn.addEventListener("click", () => {
+  if (timer) { stopTraining(); return; }
+  trainBtn.textContent = "Pause training";
+  timer = setInterval(() => {
+    for (let k = 0; k < 6; k++) weights = trainStep(weights); // 6 steps a tick, so it settles visibly
+    steps += 6;
+    render();
+  }, 40);
+});
+
+document.getElementById("randBtn").addEventListener("click", () => {
+  stopTraining();
+  steps = 0;
+  weights = weights.map(() => Math.random() * 2 - 1);
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
